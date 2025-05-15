@@ -23,65 +23,37 @@ const client = new MongoClient(uri, {
   },
 });
 
-// Connect to MongoDB using Mongoose
-mongoose
-  .connect(uri, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("Mongoose connected to MongoDB"))
-  .catch((err) => console.error("Mongoose connection error:", err));
-
-// Define the User schema
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  department: { type: String, required: true },
-  studentId: { type: String, required: true },
-  email: { type: String, required: true },
-  createdAt: { type: Date, default: Date.now },
-});
-
-// Create the User model
-const User = mongoose.model("User", userSchema);
-
 async function run() {
   try {
+    // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    console.log("✅ Connected to MongoDB Atlas");
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
 
-    const db = client.db("Books_Recommendation");
-    const users = db.collection("Users");
-    const userSchema = new mongoose.Schema({
-      name: { type: String, required: true },
-      department: { type: String, required: true },
-      studentId: { type: String, required: true },
-      email: { type: String, required: true },
-      createdAt: { type: Date, default: Date.now },
+    const usserCollection = client
+      .db("Books_Recommendation")
+      .collection("Users");
+
+    app.post("/users", async (req, res) => {
+      const user = req.body;
+      console.log(user);
+      const result = await usserCollection.insertOne(user);
+      res.send(result);
     });
 
-    const result = await users.insertOne(userSchema);
-    console.log("✅ User inserted with ID:", result.insertedId);
-  } catch (err) {
-    console.error("❌ Error:", err);
+    app.get("/", (req, res) => {
+      res.send("hello world");
+    });
+
+    app.listen(port, () => {
+      console.log(`server is running on port ${port}`);
+    });
   } finally {
+    // Ensures that the client will close when you finish/error
     await client.close();
   }
 }
-
-run();
-
-// API to register a new user
-app.post("/api/register", async (req, res) => {
-  try {
-    const Users = new Users(req.body);
-    await Users.save();
-    res.status(201).send(Users);
-  } catch (error) {
-    res.status(400).send({ error: error.message });
-  }
-});
-
-app.get("/", (req, res) => {
-  res.send("hello world");
-});
-
-app.listen(port, () => {
-  console.log(`server is running on port ${port}`);
-});
+run().catch(console.dir);
