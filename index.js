@@ -32,6 +32,10 @@ async function run() {
       .db("Books_Recommendation")
       .collection("Users");
 
+    const booksCollection = client
+      .db("Books_Recommendation")
+      .collection("Books");
+
     app.get("/", (req, res) => {
       res.send("hello world");
     });
@@ -49,6 +53,14 @@ async function run() {
       const cursor = usserCollection.find(query);
       const users = await cursor.toArray();
       res.send(users);
+    });
+
+    // get all books
+    app.get("/books", async (req, res) => {
+      const query = {};
+      const cursor = booksCollection.find(query);
+      const books = await cursor.toArray();
+      res.send(books);
     });
 
     app.listen(port, () => {
