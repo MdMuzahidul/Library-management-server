@@ -27,16 +27,15 @@ async function run() {
   try {
     // Connect the client to the server	(optional starting in v4.7)
     await client.connect();
-    // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
 
     const usserCollection = client
       .db("Books_Recommendation")
       .collection("Users");
 
+    app.get("/", (req, res) => {
+      res.send("hello world");
+    });
+    // create users
     app.post("/users", async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -44,16 +43,26 @@ async function run() {
       res.send(result);
     });
 
-    app.get("/", (req, res) => {
-      res.send("hello world");
+    // get all users
+    app.get("/users", async (req, res) => {
+      const query = {};
+      const cursor = usserCollection.find(query);
+      const users = await cursor.toArray();
+      res.send(users);
     });
 
     app.listen(port, () => {
       console.log(`server is running on port ${port}`);
     });
+
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log(
+      "Pinged your deployment. You successfully connected to MongoDB!"
+    );
   } finally {
     // Ensures that the client will close when you finish/error
-    await client.close();
+    // await client.close();
   }
 }
 run().catch(console.dir);
