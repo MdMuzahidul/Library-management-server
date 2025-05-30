@@ -11,8 +11,8 @@ app.use(express.json());
 // muzahid
 // 9YvK4ZQnMHQTJJ5A
 
-const uri =
-  "mongodb+srv://muzahid:9YvK4ZQnMHQTJJ5A@cluster0.q9owr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+// const uri = "mongodb+srv://muzahid:9YvK4ZQnMHQTJJ5A@cluster0.q9owr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0";
+const uri = "mongodb://localhost:27017";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -55,12 +55,50 @@ async function run() {
       res.send(users);
     });
 
-    // get all books
+    // get all books with pagination
     app.get("/books", async (req, res) => {
+      console.log(req.body);
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10;
+      const skip = (page - 1) * limit;
       const query = {};
-      const cursor = booksCollection.find(query);
+      const cursor = booksCollection.find(query).skip(skip).limit(limit);
       const books = await cursor.toArray();
-      res.send(books);
+      const total = await booksCollection.countDocuments(query);
+      res.send({
+        books,
+        page,
+        pageSize: limit,
+        totalPages: Math.ceil(total / limit),
+        totalItems: total,
+      });
+    });
+
+    // Helper function to parse genres string
+    function parseGenresString(genreStr) {
+      return genreStr
+        .replace(/^\[|\]$/g, "") // Remove outer [ and ]
+        .split(",") // Split by comma
+        .map((item) => item.trim()) // Trim whitespace
+        .map((item) => item.replace(/^'+|'+$/g, "")); // Remove surrounding single quotes
+    }
+
+    // get single book by id
+    app.get("/books/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new mongoose.Types.ObjectId(id) };
+      const book = await booksCollection.findOne(query);
+      if (!book) {
+        return res.status(404).send({ message: "Book not found" });
+      } else {
+        // Use parseGenresString to process genres if it's a string
+        if (book.genres && typeof book.genres === "string") {
+          book.genres = parseGenresString(book.genres);
+        } else if (!book.genres) {
+          book.genres = [];
+        }
+        res.send(book);
+      }
     });
 
     app.listen(port, () => {
