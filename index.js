@@ -153,6 +153,23 @@ async function run() {
       res.send(borrowedBooks);
     });
 
+    // admin
+    // get all users
+
+    app.get("/admin/users", async (req, res) => {
+      const query = {};
+      const cursor = usserCollection.find(query);
+      const users = await cursor.toArray(); 
+      res.send(users);
+    });
+    // all pending requests for admin
+    app.get("/admin/borrowed/pending", async (req, res) => {  
+      const query = { status: "pending" };
+      const cursor = borrowedBooksCollection.find(query);
+      const borrowedBooks = await cursor.toArray();
+      res.send(borrowedBooks);
+    });
+
     app.listen(port, () => {
       console.log(`server is running on port ${port}`);
     });
