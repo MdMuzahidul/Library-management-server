@@ -36,6 +36,10 @@ async function run() {
       .db("Books_Recommendation")
       .collection("Books");
 
+    const borrowedBooksCollection = client
+      .db("Books_Recommendation")
+      .collection("borrowList");
+
     app.get("/", (req, res) => {
       res.send("hello world");
     });
@@ -99,6 +103,54 @@ async function run() {
         }
         res.send(book);
       }
+    });
+
+    // create borrowed book
+    app.post("/borrowed", async (req, res) => {
+      const { email, bookId } = req.body;
+      if (!email || !bookId) {
+        return res
+          .status(400)
+          .send({ message: "Email and bookId are required" });
+      }
+      // Check if the combination of email and bookId already exists
+      const existingBorrow = await borrowedBooksCollection.findOne({
+        email,
+        bookId,
+      });
+      if (existingBorrow) {
+        return res.status(409).send({
+          message: "This user has already borrowed this book",
+        });
+      }
+      const result = await borrowedBooksCollection.insertOne(req.body);
+      res.send(result);
+    });
+
+    // get all borrowed books
+    app.get("/borrowed", async (req, res) => {
+      const query = {};
+      const cursor = borrowedBooksCollection.find(query);
+      const borrowedBooks = await cursor.toArray();
+      res.send(borrowedBooks);
+    });
+
+    app.get("/borrowed/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const cursor = borrowedBooksCollection.find(query);
+      const borrowedBooks = await cursor.toArray();
+      res.send(borrowedBooks);
+    });
+
+    // get borrowed books with status 'pending' for a specific email
+    app.get("/borrowed/pending/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log("Fetching pending borrowed books for email:", email);
+      const query = { email, status: "pending" };
+      const cursor = borrowedBooksCollection.find(query);
+      const borrowedBooks = await cursor.toArray();
+      res.send(borrowedBooks);
     });
 
     app.listen(port, () => {
