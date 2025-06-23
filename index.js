@@ -170,6 +170,28 @@ async function run() {
       res.send(borrowedBooks);
     });
 
+    // approve a borrowed book request
+    app.patch("/admin/borrowed/approve/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new mongoose.Types.ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          status: "approved",
+        },
+      };
+      const result = await borrowedBooksCollection.updateOne(query, updateDoc);
+      res.send(result);
+    });
+   
+
+    // get all approved borrowed books
+    app.get("/admin/borrowed/approved", async (req, res) => {
+      const query = { status: "approved" };
+      const cursor = borrowedBooksCollection.find(query);
+      const borrowedBooks = await cursor.toArray();
+      res.send(borrowedBooks);
+    });
+
     app.listen(port, () => {
       console.log(`server is running on port ${port}`);
     });
