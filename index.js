@@ -39,6 +39,9 @@ async function run() {
     const borrowedBooksCollection = client
       .db("Books_Recommendation")
       .collection("borrowList");
+    const blogCollection = client
+      .db("Books_Recommendation")
+      .collection("Blogs");
 
     app.get("/", (req, res) => {
       res.send("hello world");
@@ -198,6 +201,28 @@ async function run() {
       const cursor = borrowedBooksCollection.find(query);
       const borrowedBooks = await cursor.toArray();
       res.send(borrowedBooks);
+    });
+
+    // post a blog
+    app.post("/blogs", async (req, res) => {
+      const blog = req.body;
+      const result = await blogCollection.insertOne(blog);
+      res.send(result);
+    });
+
+    // get all blogs
+    app.get("/blogs", async (req, res) => {
+      const query = {};
+      const cursor = blogCollection.find(query);
+      const blogs = await cursor.toArray();
+      res.send(blogs);
+    });
+    // get a single blog by id
+    app.get("/blogs/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new mongoose.Types.ObjectId(id) };
+      const blog = await blogCollection.findOne(query);
+      res.send(blog);
     });
 
     app.listen(port, () => {
