@@ -152,6 +152,15 @@ async function run() {
       const borrowedBooks = await cursor.toArray();
       res.send(borrowedBooks);
     });
+    // get borrowed books with status 'approved' for a specific email
+    app.get("/user/approvedbooks/:email", async (req, res) => {
+      const email = req.params.email;
+      console.log("Fetching approved borrowed books for email:", email);
+      const query = { email, status: "approved" };
+      const cursor = borrowedBooksCollection.find(query);
+      const borrowedBookslist = await cursor.toArray();
+      res.send(borrowedBookslist);
+    });
 
     // admin
     // get all users
@@ -159,11 +168,11 @@ async function run() {
     app.get("/admin/users", async (req, res) => {
       const query = {};
       const cursor = usserCollection.find(query);
-      const users = await cursor.toArray(); 
+      const users = await cursor.toArray();
       res.send(users);
     });
     // all pending requests for admin
-    app.get("/admin/borrowed/pending", async (req, res) => {  
+    app.get("/admin/borrowed/pending", async (req, res) => {
       const query = { status: "pending" };
       const cursor = borrowedBooksCollection.find(query);
       const borrowedBooks = await cursor.toArray();
@@ -182,7 +191,6 @@ async function run() {
       const result = await borrowedBooksCollection.updateOne(query, updateDoc);
       res.send(result);
     });
-   
 
     // get all approved borrowed books
     app.get("/admin/borrowed/approved", async (req, res) => {
