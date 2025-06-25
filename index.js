@@ -61,6 +61,16 @@ async function run() {
       const users = await cursor.toArray();
       res.send(users);
     });
+    //get single user by email
+    app.get("/users/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email };
+      const user = await usserCollection.findOne(query);
+      if (!user) {
+        return res.status(404).send({ message: "User not found" });
+      }
+      res.send(user);
+    });
 
     // get all books with pagination
     app.get("/books", async (req, res) => {
