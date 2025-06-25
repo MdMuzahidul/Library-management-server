@@ -56,7 +56,7 @@ async function run() {
 
     // get all users
     app.get("/users", async (req, res) => {
-      const query = {};
+      const query = { role: "student" };
       const cursor = usserCollection.find(query);
       const users = await cursor.toArray();
       res.send(users);
@@ -196,9 +196,13 @@ async function run() {
     app.patch("/admin/borrowed/approve/:id", async (req, res) => {
       const id = req.params.id;
       const query = { _id: new mongoose.Types.ObjectId(id) };
+      const now = new Date();
+      const returnDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 days from now
       const updateDoc = {
         $set: {
           status: "approved",
+          approvedDate: now.toISOString(),
+          returnDate: returnDate.toISOString(),
         },
       };
       const result = await borrowedBooksCollection.updateOne(query, updateDoc);
@@ -234,6 +238,46 @@ async function run() {
       const blog = await blogCollection.findOne(query);
       res.send(blog);
     });
+
+    // most popular books sorted by rating, likedPercent, and numRatings
+    app.get("/books/popular", async (req, res) => {
+      const query = {};
+      const cursor = booksCollection.find(query).sort({ rating: -1, likedPercent: -1, numRatings: -1 }).limit(10);
+      const popularBooks = await cursor.toArray();
+      res.send(popularBooks);
+    });
+
+    // app.put("/books/edit/bulk", async (req, res) => {
+    //   const cursor = booksCollection.find({
+    //     awards: { $regex: /^\[.*\]$/ },
+    //   });
+
+    //   let updatedCount = 0;
+
+    //   while (await cursor.hasNext()) {
+    //     const doc = await cursor.next();
+    //     const { _id, awards } = doc;
+
+    //     try {
+    //        const matches = [...awards.matchAll(/['"]([^'"]+)['"]/g)];
+    //        const _list = matches.map((match) => match[1]);
+
+    //        if (_list.length > 0) {
+    //          await booksCollection.updateOne(
+    //            { _id },
+    //            { $set: { awards: _list } }
+    //          );
+    //          updatedCount++;
+    //        }
+    //     } catch (err) {
+    //       console.error(
+    //         `❌ Failed to parse awards for _id ${_id}:`,
+    //         err.message
+    //       );
+    //     }
+    //   }
+    //   res.json({ updatedCount });
+    // });
 
     app.listen(port, () => {
       console.log(`server is running on port ${port}`);
