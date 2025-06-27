@@ -78,7 +78,25 @@ async function run() {
       const page = parseInt(req.query.page) || 1;
       const limit = parseInt(req.query.limit) || 10;
       const skip = (page - 1) * limit;
-      const query = {};
+      const query = {
+        title: { $ne: null },
+        author: { $ne: null },
+        series: { $ne: null },
+        description: { $ne: null },
+        coverImg: { $ne: null },
+        language: { $ne: null },
+        publisher: { $ne: null },
+        publishDate: { $ne: null },
+        isbn: { $ne: null },
+        bookId: { $ne: null },
+        genres: { $ne: null },
+        characters: { $ne: null },
+        awards: { $ne: null },
+        ratingsByStars: { $ne: null },
+        rating: { $ne: null },
+        likedPercent: { $ne: null },
+        numRatings: { $ne: null }
+      };
       const cursor = booksCollection.find(query).skip(skip).limit(limit);
       const books = await cursor.toArray();
       const total = await booksCollection.countDocuments(query);
@@ -116,6 +134,16 @@ async function run() {
         }
         res.send(book);
       }
+    });
+    // get books data by isbn
+    app.get("/books/isbn/:isbn", async (req, res) => {
+      const isbn = req.params.isbn;
+      const query = { isbn };
+      const book = await booksCollection.findOne(query);
+      if (!book) {
+        return res.status(404).send({ message: "Book not found" });
+      }
+      res.send(book);
     });
 
     // create borrowed book
@@ -242,36 +270,55 @@ async function run() {
     // most popular books sorted by rating, likedPercent, and numRatings
     app.get("/books/popular", async (req, res) => {
       const query = {};
-      const cursor = booksCollection.find(query).sort({ rating: -1, likedPercent: -1, numRatings: -1 }).limit(10);
+      const cursor = booksCollection
+        .find(query)
+        .sort({ rating: -1, likedPercent: -1, numRatings: -1 })
+        .limit(10);
       const popularBooks = await cursor.toArray();
       res.send(popularBooks);
     });
 
     // app.put("/books/edit/bulk", async (req, res) => {
     //   const cursor = booksCollection.find({
-    //     awards: { $regex: /^\[.*\]$/ },
+    //     author: { $regex: /^\[.*\]$/ },
     //   });
 
     //   let updatedCount = 0;
 
     //   while (await cursor.hasNext()) {
     //     const doc = await cursor.next();
-    //     const { _id, awards } = doc;
+    //     const { _id, author } = doc;
 
     //     try {
-    //        const matches = [...awards.matchAll(/['"]([^'"]+)['"]/g)];
-    //        const _list = matches.map((match) => match[1]);
+    //       // Replace single quotes with double quotes to make it valid JSON
+    //       const jsonReady = author.replace(/'/g, '"');
 
-    //        if (_list.length > 0) {
-    //          await booksCollection.updateOne(
-    //            { _id },
-    //            { $set: { awards: _list } }
-    //          );
-    //          updatedCount++;
-    //        }
+    //       // Parse the string into an actual array
+    //       const parsedArray = JSON.parse(jsonReady);
+
+    //       let finalArray = parsed;
+
+    //       if (
+    //         Array.isArray(parsed) &&
+    //         parsed.length === 1 &&
+    //         typeof parsed[0] === "string"
+    //       ) {
+    //         finalArray = parsed[0]
+    //           .split(",")
+    //           .map((item) => item.trim())
+    //           .filter(Boolean);
+    //       }
+
+    //       // Step 4: update the document
+    //       await booksCollection.updateOne(
+    //         { _id },
+    //         { $set: { authors: finalArray } }
+    //       );
+
+    //       updatedCount++;
     //     } catch (err) {
     //       console.error(
-    //         `❌ Failed to parse awards for _id ${_id}:`,
+    //         `❌ Failed to parse author for _id ${_id}:`,
     //         err.message
     //       );
     //     }
