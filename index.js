@@ -268,11 +268,12 @@ async function run() {
     });
 
     // most popular books sorted by rating, likedPercent, and numRatings
-    app.get("/books/popular", async (req, res) => {
+    app.get("/popular/books", async (req, res) => {
+      console.log("Fetching popular books");
       const query = {};
       const cursor = booksCollection
         .find(query)
-        .sort({ rating: -1, likedPercent: -1, numRatings: -1 })
+        .sort({ rating: -1, likedPercent: -1 })
         .limit(10);
       const popularBooks = await cursor.toArray();
       res.send(popularBooks);
