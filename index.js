@@ -95,7 +95,7 @@ async function run() {
         ratingsByStars: { $ne: null },
         rating: { $ne: null },
         likedPercent: { $ne: null },
-        numRatings: { $ne: null }
+        numRatings: { $ne: null },
       };
       const cursor = booksCollection.find(query).skip(skip).limit(limit);
       const books = await cursor.toArray();
@@ -267,10 +267,41 @@ async function run() {
       res.send(blog);
     });
 
+    // get blogs by bookId
+    app.get("/blog/book/:_id", async (req, res) => {
+      const _id = req.params._id;
+      // Validate ObjectId before using it
+      if (!mongoose.Types.ObjectId.isValid(_id)) {
+        return res.status(400).send({ message: "Invalid book id" });
+      }
+      const query = { bookId: new mongoose.Types.ObjectId(_id) };
+      const cursor = blogCollection.find(query);
+      const blogs = await cursor.toArray();
+      res.send(blogs);
+    });
+
     // most popular books sorted by rating, likedPercent, and numRatings
     app.get("/popular/books", async (req, res) => {
       console.log("Fetching popular books");
-      const query = {};
+      const query = {
+        title: { $ne: null },
+        author: { $ne: null },
+        series: { $ne: null },
+        description: { $ne: null },
+        coverImg: { $ne: null },
+        language: { $ne: null },
+        publisher: { $ne: null },
+        publishDate: { $ne: null },
+        isbn: { $ne: null },
+        bookId: { $ne: null },
+        genres: { $ne: null },
+        characters: { $ne: null },
+        awards: { $ne: null },
+        ratingsByStars: { $ne: null },
+        rating: { $ne: null },
+        likedPercent: { $ne: null },
+        numRatings: { $ne: null },
+      };
       const cursor = booksCollection
         .find(query)
         .sort({ rating: -1, likedPercent: -1 })
