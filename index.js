@@ -237,6 +237,16 @@ async function run() {
       res.send(result);
     });
 
+    // delete a borrowed book request
+    app.delete("/admin/borrowed/reject/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new mongoose.Types.ObjectId(id) };
+      const result = await borrowedBooksCollection.deleteOne(query);
+      res
+        .status(201)
+        .json({ message: "Borrowed book request rejected successfully" });
+    });
+
     // get all approved borrowed books
     app.get("/admin/borrowed/approved", async (req, res) => {
       const query = { status: "approved" };
